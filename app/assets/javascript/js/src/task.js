@@ -1,20 +1,20 @@
 const TaskUI = ((SET) => {
     return {
         renderData: ({ results }) => {
+            let no = 1;
             let body = results.map(v => {
                 return `
                 <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                    </td>
+                    <td>${no++}</td>
+                    <td>${SET.safeXSS(v.task)}</td>
+                    <td>${SET.safeXSS(v.due_date)}</td>
+                    <td>${SET.safeXSS(v.priority)}</td>
                     <td class="text-center">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-alt-secondary" data-bs-toggle="tooltip" title="Edit">
+                        <button type="button" class="btn btn-sm btn-alt-secondary btn-edit" data-id="${v.id}" data-bs-toggle="tooltip" title="Edit">
                         <i class="fa fa-fw fa-pencil-alt"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-alt-secondary" data-bs-toggle="tooltip" title="Delete">
+                        <button type="button" class="btn btn-sm btn-alt-secondary btn-delete" data-id="${v.id}" data-task="${v.task}" data-bs-toggle="tooltip" title="Delete">
                         <i class="fa fa-fw fa-times"></i>
                         </button>
                     </div>
@@ -100,104 +100,6 @@ const TaskUI = ((SET) => {
 
             $("#t_task tbody").html(html);
         },
-
-        renderData_toko: ({ results }) => {
-            let body = results.map(v => {
-                return `
-                    <tr>
-                        <td style="width: 10%;">${results.from++}</td>
-                        <td style="width: 10%;">${v.name}</td>
-                        <td style="width: 20%;">Rp. ${SET.realCurrency(v.price)}</td>
-                        <td style="width: 10%;">${v.stock}</td>
-                        <td style="width: 20%;">${v.description}</td>
-                        <td style="width: 20%;"><img src="${SET.imageURL()}${v.image}" alt="Image" width="100%"></td>
-                        <td style="width: 10%;">
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-warning btn-edit" data-id="${v.id}">Edit</button>
-                                <button class="btn btn-sm btn-danger btn-delete" data-id="${v.id}" data-name="${v.name}">Delete</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('')
-
-            $("#t_task tbody").html(body);
-        },
-
-        renderFooter_toko: ({ results }) => {
-
-            let max_page = 15;
-            let start = results.current_page - 5
-            let end = results.current_page + 5
-
-            if (start <= 1) { start = 2 }
-            if (end > results.last_page) { end = results.last_page - 1 }
-
-            let footer = `
-                <tr>
-                    <td colspan="7" class="text-center">
-                        <div class="btn-group mr-2" role="group" aria-label="First group">
-                            <button type="button" class="btn btn-secondary btn-pagination"  ${results.prev_page_url === null ? "disabled" : "" } data-url="${results.first_page_url}"> << </button>
-                            <button type="button" class="btn btn-secondary btn-pagination" data-toggle="modal" ${results.prev_page_url === null ? "disabled" : "" } data-url="${results.prev_page_url}"> < </button>
-                        </div>
-            `;
-
-            footer += `
-                <div class="btn-group mr-2" role="group" aria-label="Third group">
-                    <button type="button" class="btn btn-secondary btn-pagination" ${results.current_page === 1 ? 'disabled' : ''} data-url="${results.first_page_url}">1</button>`
-
-            if (results.current_page != 1) {
-                footer += `<button type="button" class="btn btn-secondary btn-pagination" disabled data-url="">...</button>`;
-            }
-
-            for (let i = start; i <= end; i++) {
-                if (i === results.current_page) {
-                    footer += `<button type="button" class="btn btn-secondary btn-pagination" ${results.current_page === i ? 'disabled' : ''} data-url="${results.path}?page=${i}">${i}</button>`;
-                } else {
-                    footer += `<button type="button" class="btn btn-secondary btn-pagination" ${results.current_page === i ? 'disabled' : ''} data-url="${results.path}?page=${i}">${i}</button>`;
-                }
-            }
-
-            if ((results.current_page != results.last_page)) {
-                footer += `<button type="button" class="btn btn-secondary btn-pagination" disabled data-url="">...</button>`;
-
-            }
-
-            footer += `    
-                    <button type="button" class="btn btn-secondary btn-pagination" ${results.current_page === results.last_page ? 'disabled' : ''} data-url="${results.last_page_url}">${results.last_page}</button>
-                </div>
-            `;
-
-            footer += `
-                        <div class="btn-group" role="group" aria-label="Third group">
-                                <button type="button" class="btn btn-secondary btn-pagination" ${results.next_page_url === null ? "disabled" : "" } data-url="${results.next_page_url}"> > </button>
-                                <button type="button" class="btn btn-secondary btn-pagination" ${results.current_page === results.last_page ? "disabled" : "" } data-url="${results.last_page_url}"> >> </button>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            `;
-
-            $("#t_task tfoot").html(footer);
-        },       
-        
-        renderNoData_toko: () => {
-            let html = `
-                <tr>
-                    <td class="text-center" colspan="7">
-                        <img class="img-fluid" src="${SET.baseURL()}/images/no-data.svg" alt="" style="height: 150px; margin-bottom: 35px;"><br>
-                        <span class="font-weight-bold">Tidak ada data tersedia.</span><br>
-                        <span>
-                            <div class="btn-group mt-2">
-                                <button class="btn btn-info btn-md" id="btn_add_data" style="width: 125px;"><i class="fas fa-plus"></i> Add</button>
-                            </div>
-                        </span>
-                    </td>
-                </tr>
-            `
-
-            $("#t_task tbody").html(html);
-        }
     }
 })(SettingController)
 
@@ -236,7 +138,7 @@ const TaskController = ((SET, UI) => {
         });
     };
 
-    const gettaskID = (id, loaderContainer, callback) => {
+    const getTaskID = (id, loaderContainer, callback) => {
         $.ajax({
             url: `${SET.baseURL()}task/${id}`,
             type: "GET",
@@ -297,7 +199,15 @@ const TaskController = ((SET, UI) => {
                 }
             },
             rules: {
-                shop_id: {
+                task: {
+                    required: true,
+                    maxlength: 50,
+                },
+                due_date: {
+                    required: true,
+                    maxlength: 50,
+                },
+                priority: {
                     required: true,
                     maxlength: 50,
                 },
@@ -312,14 +222,13 @@ const TaskController = ((SET, UI) => {
                         SET.buttonLoader("#btn_submit");
                     },
                     success: res => {
-                        console.log(res);
-                        // fetchTask(filter);
-                        // $("#modal_add").modal("hide");
-                        // toastr.success(
-                        //     "Success",
-                        //     res.message,
-                        //     SET.bottomNotif()
-                        // );
+                        fetchTask(filter);
+                        $("#modal_add").modal("hide");
+                        toastr.success(
+                            "Success",
+                            res.message,
+                            SET.bottomNotif()
+                        );
                     },
                     error: (err) => {
                         toastr.error(
@@ -352,10 +261,10 @@ const TaskController = ((SET, UI) => {
     const openDelete = () => {
         $("#t_task").on("click", ".btn-delete", function () {
             let delete_id = $(this).data("id");
-            let delete_name = $(this).data("name");
+            let delete_task = $(this).data("task");
 
             $("#delete_id").val(delete_id);
-            $("#delete_name").text(delete_name);
+            $("#delete_task").text(delete_task);
             $("#modal_delete").modal("show");
         });
     };
@@ -375,7 +284,7 @@ const TaskController = ((SET, UI) => {
                 let id = $("#delete_id").val();
 
                 $.ajax({
-                    url: `/task/${id}`,
+                    url: `${SET.baseURL()}task`,
                     type: "DELETE",
                     dataType: "JSON",
                     data: $(form).serialize(),
@@ -426,22 +335,12 @@ const TaskController = ((SET, UI) => {
 
             $("#form_edit")[0].reset();
 
-            gettaskID(edit_id, ".modal-body", data => {
+            getTaskID(edit_id, ".modal-body", data => {
               
                 $("#edit_id").val(data.id);
-                $("#edit_name").val(data.name);
-                $("#edit_price").val(parseInt(data.price));
-                $("#edit_stock").val(data.stock);
-                $("#edit_description").val(data.description);
-
-                if (data.image !== null && data.image.length > 0) {      
-                    html = `<input type="file" name="image" id="edit_image" class="dropify" data-default-file="${SET.imageURL()}${data.image}"   data-allowed-file-extensions="jpg jpeg png" data-max-file-size="2M">`;   
-                    $('#old_image').val(data.image)                
-                }else{
-                    html = `<input type="file" name="image" id="edit_image" class="dropify" data-allowed-file-extensions="jpg jpeg png" data-max-file-size="2M">`;
-                }
-                $('#task-image').html(html);
-                $('#edit_image').dropify();
+                $("#task_edit").val(data.task);
+                $("#due_date_edit").val(data.due_date);
+                $("#priority_edit").val(data.priority);
             });
 
             $("#modal_edit").modal("show");
@@ -449,7 +348,7 @@ const TaskController = ((SET, UI) => {
     };
 
     const submitEdit = filter => {
-        $("#form_edits").validate({
+        $("#form_edit").validate({
             errorClass: "is-invalid",
             errorElement: "div",
             errorPlacement: function (error, element) {
@@ -457,32 +356,24 @@ const TaskController = ((SET, UI) => {
                 error.insertAfter(element);
             },
             rules: {
-                shop_id: {
+                task: {
                     required: true,
                     maxlength: 50,
                 },
-                name: {
+                due_date: {
                     required: true,
                     maxlength: 50,
                 },
-                price: {
+                priority: {
                     required: true,
                     maxlength: 50,
-                },
-                stock: {
-                    required: true,
-                    maxlength: 50,
-                },
-                description: {
-                    required: false,
-                    maxlength: 255,
                 },
             },
             submitHandler: (form) => {
                 let edit_id = $("#edit_id").val();
 
                 $.ajax({
-                    url: `${SET.baseURL()}task/${edit_id}`,
+                    url: `${SET.baseURL()}task`,
                     type: "PUT",
                     dataType: "JSON",
                     data: $(form).serialize(),
