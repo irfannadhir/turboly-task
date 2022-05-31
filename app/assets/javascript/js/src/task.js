@@ -9,13 +9,17 @@ const TaskUI = ((SET) => {
                     <td>${SET.safeXSS(v.task)}</td>
                     <td>${SET.safeXSS(v.due_date)}</td>
                     <td>${SET.safeXSS(v.priority)}</td>
+                    <td>${SET.safeXSS(v.description)}</td>
                     <td class="text-center">
                     <div class="btn-group">
                         <button type="button" class="btn btn-sm btn-alt-secondary btn-edit" data-id="${v.id}" data-bs-toggle="tooltip" title="Edit">
-                        <i class="fa fa-fw fa-pencil-alt"></i>
+                            <i class="fa fa-fw fa-pencil-alt"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-alt-secondary btn-delete" data-id="${v.id}" data-task="${v.task}" data-bs-toggle="tooltip" title="Delete">
-                        <i class="fa fa-fw fa-times"></i>
+                            <i class="fa fa-fw fa-times"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-alt-success btn-status" data-id="${v.id}" data-task="${v.task}" data-bs-toggle="tooltip" title="Status">
+                            ${v.status}
                         </button>
                     </div>
                     </td>
@@ -99,6 +103,42 @@ const TaskUI = ((SET) => {
             `
 
             $("#t_task tbody").html(html);
+        },
+
+        renderReminder: data => {
+
+            let html = `
+                <div class="mb-3">
+                    <h4>You have ( <b>${data.length}</b> ) list to do :</h4>
+                </div>
+                <div class="list-group">
+                    ${data.map(v => {
+                        return `
+                            <a href="javascript:void(0)" class="list-group-item list-group-item-action flex-column align-items-start">
+                                <p class="mb-1">${v.description}</p>
+                                <small>Due date: ${v.due_date}</small><br>
+                                <small>Priority: ${v.priority}</small><br>
+                                <small>Status: ${v.status}</small>
+                            </a>
+                        `
+                    }).join('')}
+                </div>
+            `
+
+            
+
+            $('#reminder_content').html(html);
+        },
+        renderReminderNoData: () => {
+
+            let html = `
+                <div class="text-center">
+                    <h4 class="text-warning">No Data Founds</h4>
+                    <h5>No Reminder for Today</h5>
+                </div>
+            `
+
+            $('#reminder_content').html(html);
         },
     }
 })(SettingController)
@@ -211,6 +251,10 @@ const TaskController = ((SET, UI) => {
                     required: true,
                     maxlength: 50,
                 },
+                description: {
+                    required: true,
+                    maxlength: 50,
+                },
             },
             submitHandler: form => {
                 $.ajax({
@@ -266,6 +310,17 @@ const TaskController = ((SET, UI) => {
             $("#delete_id").val(delete_id);
             $("#delete_task").text(delete_task);
             $("#modal_delete").modal("show");
+        });
+    };
+
+    const openStatus = () => {
+        $("#t_task").on("click", ".btn-status", function () {
+            let status_id = $(this).data("id");
+            let status_task = $(this).data("task");
+
+            $("#status_id").val(status_id);
+            $("#status_task").text(status_task);
+            $("#modal_status").modal("show");
         });
     };
 
@@ -329,6 +384,65 @@ const TaskController = ((SET, UI) => {
         });
     };
 
+    const submitStatus = (filter) => {
+        $("#form_status").validate({
+            errorClass: "is-invalid",
+            errorElement: "div",
+            errorPlacement: function (error, element) {
+                error.addClass("invalid-feedback");
+                error.insertAfter(element);
+            },
+            rules: {
+                id: "required",
+            },
+            submitHandler: (form) => {
+
+                $.ajax({
+                    url: `${SET.baseURL()}task/status`,
+                    type: "POST",
+                    dataType: "JSON",
+                    data: $(form).serialize(),
+                    beforeSend: xhr => {
+                        SET.buttonLoader("#btn_submit_status");
+                    },
+                    success: (res) => {
+                        fetchTask(filter);
+                        $("#modal_status").modal("hide");
+                        toastr.success(
+                            "Success",
+                            res.message,
+                            SET.bottomNotif()
+                        );
+                    },
+                    error: (err) => {
+                        // let error = err.responseJSON;
+                        // toastr.error(
+                        //     "Failed",
+                        //     error.message,
+                        //     SET.bottomNotif()
+                        // );
+                    },
+                    complete: () => {
+                        SET.closeButtonLoader("#btn_submit_status");
+                    },
+                    statusCode: {
+                        404: function () {
+                            toastr.error(
+                                "Cannot find ID",
+                                "Failed",
+                                SET.bottomNotif()
+                            );
+                        },
+                        401: function () {
+                            window.location.href = `${SET.baseURL()}status_session`;
+                        },
+                        500: function () {},
+                    },
+                });
+            },
+        });
+    };
+
     const openEdit = () => {
         $("#t_task").on("click", ".btn-edit", function () {
             let edit_id = $(this).data("id");
@@ -341,6 +455,7 @@ const TaskController = ((SET, UI) => {
                 $("#task_edit").val(data.task);
                 $("#due_date_edit").val(data.due_date);
                 $("#priority_edit").val(data.priority);
+                $("#description_edit").val(data.description);
             });
 
             $("#modal_edit").modal("show");
@@ -365,6 +480,10 @@ const TaskController = ((SET, UI) => {
                     maxlength: 50,
                 },
                 priority: {
+                    required: true,
+                    maxlength: 50,
+                },
+                description: {
                     required: true,
                     maxlength: 50,
                 },
@@ -458,6 +577,42 @@ const TaskController = ((SET, UI) => {
         
     }
 
+    const _fetchTodayReminder = callback => {
+        $.ajax({
+            url: `${SET.baseURL()}reminders/today`,
+            type: 'GET',
+            dataType: 'JSON',
+            success: res => {
+                if(res.results.length === 0){
+                    UI.renderReminderNoData()
+                } else {
+                    callback(res.results)
+                }
+            },
+            error: ({ responseJSON }) => {
+                // UI.renderReminderError()
+                toastr.error(responseJSON.message, 'Failed', { "progressBar": true, "closeButton": true, "positionClass": 'toast-bottom-right' });
+            },
+            complete: () => {
+
+            }
+        })
+    }
+
+    const reminderPanel = () => {
+        let has_modal = $('#modal_welcome').length;
+        
+        if(has_modal === 1){
+         $(document).ready(() => {
+            $('#modal_welcome').modal('show');
+
+            _fetchTodayReminder(data => {
+                UI.renderReminder(data)
+            })
+         })
+        }
+    }
+
     return {
         init: TOKEN => {
             setupToken(TOKEN)
@@ -475,6 +630,9 @@ const TaskController = ((SET, UI) => {
             changePaginate(filter);
             search(filter);
             changeType(filter);
+            openStatus();
+            submitStatus();
+            reminderPanel()
         },
     };
 })(SettingController, TaskUI);

@@ -15,6 +15,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_05_31_150637) do
     t.string "task"
     t.date "due_date"
     t.string "priority"
+    t.string "description"
+    t.string "status", default: "Uncomplete"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

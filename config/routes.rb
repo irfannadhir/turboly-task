@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   get 'task/:id', to: 'task#show'
   put 'task', to: 'task#update'
   delete 'task', to: 'task#destroy'
+  post 'task/status', to: 'task#status'
+  get 'reminders/today', to: 'task#today'
 
   post 'logout', to: 'login#logout'
   get 'login', to: 'login#index'

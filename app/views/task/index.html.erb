@@ -8,8 +8,8 @@
     <meta name="author" content="pixelcave">
     <meta name="robots" content="noindex, nofollow">
     <meta property="og:title" content="Turboly Ruby on Rails with Ajax">
-    <meta property="og:site_name" content="OneUI">
-    <meta property="og:description" content="Turboly Tas">
+    <meta property="og:site_name" content="Turboly">
+    <meta property="og:description" content="Turboly Task">
     <meta property="og:type" content="website">
     <meta property="og:url" content="">
     <meta property="og:image" content="">
@@ -407,11 +407,11 @@
       </aside>
       <nav id="sidebar" aria-label="Main Navigation">
         <div class="content-header">
-          <a class="fw-semibold text-dual" href="index.html">
+          <a class="fw-semibold text-dual" href="javascript:void(0)">
             <span class="smini-visible">
               <i class="fa fa-circle-notch text-primary"></i>
             </span>
-            <span class="smini-hide fs-5 tracking-wider">One<span class="fw-normal">UI</span></span>
+            <span class="smini-hide fs-5 tracking-wider">Turboly<span class="fw-normal">Task</span></span>
           </a>
           <div>
             <button type="button" class="btn btn-sm btn-alt-secondary" data-toggle="layout" data-action="dark_mode_toggle">
@@ -507,13 +507,13 @@
             <div class="dropdown d-inline-block ms-2">
               <button type="button" class="btn btn-sm btn-alt-secondary d-flex align-items-center" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <img class="rounded-circle" src="assets/media/avatars/avatar10.jpg" alt="Header Avatar" style="width: 21px;">
-                <span class="d-none d-sm-inline-block ms-2">John</span>
+                <span class="d-none d-sm-inline-block ms-2"><%= current_user.name %></span>
                 <i class="fa fa-fw fa-angle-down d-none d-sm-inline-block opacity-50 ms-1 mt-1"></i>
               </button>
               <div class="dropdown-menu dropdown-menu-md dropdown-menu-end p-0 border-0" aria-labelledby="page-header-user-dropdown">
                 <div class="p-3 text-center bg-body-light border-bottom rounded-top">
                   <img class="img-avatar img-avatar48 img-avatar-thumb" src="assets/media/avatars/avatar10.jpg" alt="">
-                  <p class="mt-2 mb-0 fw-medium">John Smith</p>
+                  <p class="mt-2 mb-0 fw-medium"><%= current_user.name %></p>
                   <p class="mb-0 text-muted fs-sm fw-medium">Web Developer</p>
                 </div>
                 <div class="p-2">
@@ -705,6 +705,16 @@
                         </select>
                       </div>
                     </div>
+                    <div class="col-md-2">
+                      <div class="form-group my-2">
+                        <select name="sort_task_type" class="form-control" id="sort_task_type">
+                          <option disabled selected>--Pilih--</option>
+                          <option value="due_date">Due Date</option>
+                          <option value="description">Description</option>
+                          <option value="priority">Priority</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="card-body">
@@ -718,7 +728,8 @@
                             </th>
                             <th>Task</th>
                             <th>Due Date</th>
-                            <th>Priorities</th>
+                            <th>Priority</th>
+                            <th>Description</th>
                             <th class="text-center" style="width: 100px;">Actions</th>
                           </tr>
                         </thead>
@@ -739,7 +750,7 @@
               <div class="modal-content">
                 <div class="block block-rounded block-transparent mb-0">
                   <div class="block-header block-header-default">
-                    <h3 class="block-title">Tambah Produk</h3>
+                    <h3 class="block-title">Add Task</h3>
                     <div class="block-options">
                       <button type="button" class="btn-block-option" data-bs-dismiss="modal"
                                         aria-label="Close">
@@ -749,16 +760,20 @@
                   </div>
                   <div class="block-content fs-sm">
                     <div class="mb-3">
-                      <label for="image" class="form-label">Task</label>
+                      <label for="task" class="form-label">Task</label>
                       <%= form.text_field :task, class: "form-control", id: "task_add", placeholder: "Example: Workout" %>
                     </div>
                     <div class="mb-3">
-                      <label for="image" class="form-label">Due Date</label>
+                      <label for="due_date" class="form-label">Due Date</label>
                       <%= form.date_field :due_date, value: Date.today, class: "form-control" %>
                     </div>
                     <div class="mb-3">
-                      <label for="image" class="form-label">Priority</label>
+                      <label for="priority" class="form-label">Priority</label>
                       <%= form.select(:priority, ['LOW', 'MEDIUM', 'HIGH'], {}, { :class => 'form-control' }) %>
+                    </div>
+                    <div class="mb-3">
+                      <label for="description" class="form-label">Description</label>
+                      <%= form.text_field :description, class: "form-control" %>
                     </div>
                   </div>
                 </div>
@@ -798,6 +813,10 @@
                     <div class="mb-3">
                       <label for="priority" class="form-label">Priority</label>
                       <%= form.select(:priority, ['LOW', 'MEDIUM', 'HIGH'], {}, { :class => 'form-control', :id => "priority_edit" }) %>
+                    </div>
+                    <div class="mb-3">
+                      <label for="description" class="form-label">Description</label>
+                      <%= form.text_field :description, class: "form-control", id: "description_edit" %>
                     </div>
                   </div>
                 </div>
@@ -841,6 +860,60 @@
             </div>
           </div>
         <% end %>
+        <%= form_with url: "/task", method: :post, :html => {:id => "form_status"} do |form| %>
+          <div class="modal" id="modal_status" tabindex="-1" role="dialog" aria-labelledby="modal_status"
+                aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="block block-rounded block-transparent mb-0">
+                  <div class="block-header block-header-default">
+                    <h3 class="block-title">status Task</h3>
+                    <div class="block-options">
+                      <button type="button" class="btn-block-option" data-bs-dismiss="modal"
+                                        aria-label="Close">
+                        <i class="fa fa-fw fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="block-content fs-sm">
+                    <input type="hidden" name="id" id="status_id">
+                    <div class="mb-3 d-flex">
+                      Yakin Akan Mengupdate data&ensp;
+                      <div id="status_task" class="ml-1"></div>
+                      ?
+                    </div>
+                  </div>
+                </div>
+                <div class="block-content block-content-full text-end bg-body">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                  <button type="submit" class="btn btn-primary" id="btn_submit_status">Update</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        <div class="modal" id="modal_welcome" tabindex="-1" role="dialog" aria-labelledby="modal_welcome"
+                aria-hidden="true" style="display: none;">
+          <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title text-primary" id="myLargeModalLabel">Welcome To Task System</h4>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-hidden="true">×</button>
+              </div>
+              <div class="modal-body">
+                <div id="reminder_content">
+                  <div class="text-center">
+                    <h4>Loading...</h4>
+                    <h5>Fetch All Reminder</h5>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-danger waves-effect text-left" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
       <footer id="page-footer" class="bg-body-light">
         <div class="content py-3">
@@ -849,7 +922,7 @@
               Crafted with <i class="fa fa-heart text-danger"></i> by <a class="fw-semibold" href="https://1.envato.market/ydb" target="_blank">pixelcave</a>
             </div>
             <div class="col-sm-6 order-sm-1 py-1 text-center text-sm-start">
-              <a class="fw-semibold" href="https://1.envato.market/AVD6j" target="_blank">OneUI 5.2</a> &copy; <span data-toggle="year-copy"></span>
+              <a class="fw-semibold" href="https://1.envato.market/AVD6j" target="_blank">Turboly Task</a> &copy; <span data-toggle="year-copy"></span>
             </div>
           </div>
         </div>

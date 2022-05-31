@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-    validates :password, length: { minimum: 5, allow_nill: true}
+    # validates :password, length: { minimum: 5, allow_nill: true}
     
     def password
         @password
