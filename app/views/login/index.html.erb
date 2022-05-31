@@ -18,6 +18,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/media/favicons/apple-touch-icon-180x180.png">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <%= stylesheet_link_tag 'application' %>
+    <%= csrf_meta_tags %>
   </head>
   <body>
     <div id="page-container">
@@ -83,12 +84,12 @@
                   <!-- For more info and examples you can check out https://github.com/jzaefferer/jquery-validation -->
                   <div class="row g-0 justify-content-center">
                     <div class="col-sm-8 col-xl-4">
-                      <form class="js-validation-signin" action="be_pages_auth_all.html" method="POST">
+                      <form id="form_login">
                         <div class="mb-4">
-                          <input type="text" class="form-control form-control-lg form-control-alt py-3" id="login-username" name="login-username" placeholder="Username">
+                          <input type="email" name="email" class="form-control form-control-lg form-control-alt py-3" id="email" name="login-username" placeholder="Email">
                         </div>
                         <div class="mb-4">
-                          <input type="password" class="form-control form-control-lg form-control-alt py-3" id="login-password" name="login-password" placeholder="Password">
+                          <input type="password" class="form-control form-control-lg form-control-alt py-3" id="password" name="password" placeholder="Password">
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-4">
                           <div>
@@ -97,7 +98,7 @@
                             </a>
                           </div>
                           <div>
-                            <button type="submit" class="btn btn-lg btn-alt-primary">
+                            <button type="submit" class="btn btn-lg btn-alt-primary" id="btn_submit">
                               <i class="fa fa-fw fa-sign-in-alt me-1 opacity-50"></i> Sign In
                             </button>
                           </div>
@@ -139,5 +140,13 @@
     <script src="assets/js/plugins/jquery-validation/jquery.validate.min.js"></script>
     <!-- Page JS Code -->
     <script src="assets/js/pages/op_auth_signin.min.js"></script>
+    <script src="assets/js/jquery.blockUI.js"></script>
+    <script src="assets/js/toastr.min.js"></script>
+    <script src="assets/js/src/setting.js"></script>
+    <script src="assets/js/src/auth.js"></script>
+    <script>
+      var TOKEN = $('meta[name="csrf-token"]').attr('content');
+          AuthController.init(TOKEN)
+    </script>
   </body>
 </html>
