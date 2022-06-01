@@ -36,38 +36,15 @@ const AuthController = ((SET) => {
                         window.location.href = `${SET.baseURL()}task`;
                     },
                     error: err => {
-                      
+                        toastr.error(
+                            "Failed",
+                            err.responseJSON.message,
+                            SET.bottomNotif()
+                        );
                     },
                     complete: () => {
                         SET.closeButtonLoader("#btn_submit");
                     },
-                    statusCode:  {
-                        404: function () {
-                            SET.__404page()
-                        },
-                        422: function (res) {
-                            let error = res.responseJSON;
-                            toastr.error(error.message, "Failed 422", SET.bottomNotif());
-                        },
-                        401: function () {
-                            window.location.href = `${SET.__baseURL()}delete_session`;
-                        },
-                        500: function () {
-        
-                        },
-                        400: () => {
-                            let error = err.responseJSON;
-                  
-                            toastr.error(
-                                "Failed",
-                                "Akun anda di-nonaktifkan, silakan hubungi admin!",
-                                SET.bottomNotif()
-                            );
-                            setTimeout(() => {
-                                window.location.href = `${SET.baseURL()}login`;
-                            }, 1000);
-                        }
-                    }
                 });
             },
         });

@@ -29,7 +29,7 @@ class LoginController < ApplicationController
       render json: {
         status: false,
         message: "Invalid email or password"
-      }
+      }, :status => 400 
     end
 
     # private
